@@ -1,8 +1,12 @@
+// Jose Antonio Bernal Pérez
+// Universidad Complutense de Madrid
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
 #include <math.h>
 
+// CUDA
+#include <cuda.h>
 
 void Mul(float *A, float *B, int hA, int wA, int wB, float *C)
 {
@@ -14,6 +18,11 @@ void Mul(float *A, float *B, int hA, int wA, int wB, float *C)
 			for (k=0; k<wA; k++)
 				C[i*wB+j] += A[i*wA+k]*B[k*wB+j];
 		}
+}
+
+__global__ void MulGPU(float *A, float *B, int hA, int wA, int wB, float *C)
+{
+
 }
 
 
@@ -77,7 +86,8 @@ int diff(float *A, float *B, int hA, int wA, int wB, float *C)
 int main(int argc, char** argv)
 {
 	// Matrix variables
-	float *A, *B, *C;
+	float *A, *B, *C, *C_HOST;
+	float *A_GPU, *B_GPU, *C_GPU;
 	int hA, wA, hB, wB;
 	int i;
 
@@ -103,12 +113,32 @@ int main(int argc, char** argv)
 
 	int size_C = wB * hA;
 	C = (float*)malloc(size_C*sizeof(float));
+	C_HOST = (float*)malloc(size_C*sizeof(float));
 	for (i = 0; i < (hA*wB); i++) {
 		C[i] = 0.0;
 	}
+	
+	// GPU MALLOC
+	cudaMalloc((void **) &A_GPU, sizeA*sizeof(float));
+	cudaMalloc((void **) &B_GPU, sizeB*sizeof(float));
+	cudaMalloc((void **) &C_GPU, sizeC*sizeof(float));
+	
+	/* CPU -> GPU */
+	cudaMemcpy(A_GPU, A, sizeA*sizeof(float), cudaMemcpyHostToDevice);
+	cudaMemcpy(B_GPU, B, sizeB*sizeof(float), cudaMemcpyHostToDevice);
+	cudaMemcpy(C_GPU, C, sizeC*sizeof(float), cudaMemcpyHostToDevice);
 
-
+	// MULT CPU
 	Mul(A, B, hA, wA, wB, C);
+
+	// MULT GPU
+	dim3 dimBlock(1,1);
+	dim3 dimGrid(1,1);
+	MulGPU<<<dimGrid,dimBlock>>>(A_GPU, B_GPU, hA, wA, wB, C_GPU);
+
+	// GPU -> CPU
+	cudaMemcpy(C_HOST, C_GPU, sizeC*sizeof(float), cudaMemcpyDeviceToHost);
+
 	//printf("\n\nMATRIX A\n");print_matrix(A, hA, wA);
 	//printf("\n\nMATRIX B\n");print_matrix(B, hB, wB);
 	//printf("\n\nMATRIX C\n");print_matrix(C, hA, wB);
