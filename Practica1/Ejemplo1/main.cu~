@@ -1,3 +1,5 @@
+// Jose Antonio Bernal Pérez
+// Universidad Complutense de Madrid
 #include <stdio.h>
 #include <stdlib.h>
 

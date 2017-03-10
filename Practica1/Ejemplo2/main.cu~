@@ -22,7 +22,7 @@ void Mul(float *A, float *B, int hA, int wA, int wB, float *C)
 
 __global__ void MulGPU(float *A, float *B, int hA, int wA, int wB, float *C)
 {
-	
+
 }
 
 
@@ -119,14 +119,14 @@ int main(int argc, char** argv)
 	}
 	
 	// GPU MALLOC
-	cudaMalloc((void **) &A_GPU, sizeA*sizeof(float));
-	cudaMalloc((void **) &B_GPU, sizeB*sizeof(float));
-	cudaMalloc((void **) &C_GPU, sizeC*sizeof(float));
+	cudaMalloc((void **) &A_GPU, size_A*sizeof(float));
+	cudaMalloc((void **) &B_GPU, size_B*sizeof(float));
+	cudaMalloc((void **) &C_GPU, size_C*sizeof(float));
 	
 	/* CPU -> GPU */
-	cudaMemcpy(A_GPU, A, sizeA*sizeof(float), cudaMemcpyHostToDevice);
-	cudaMemcpy(B_GPU, B, sizeB*sizeof(float), cudaMemcpyHostToDevice);
-	cudaMemcpy(C_GPU, C, sizeC*sizeof(float), cudaMemcpyHostToDevice);
+	cudaMemcpy(A_GPU, A, size_A*sizeof(float), cudaMemcpyHostToDevice);
+	cudaMemcpy(B_GPU, B, size_B*sizeof(float), cudaMemcpyHostToDevice);
+	cudaMemcpy(C_GPU, C, size_C*sizeof(float), cudaMemcpyHostToDevice);
 
 	// MULT CPU
 	Mul(A, B, hA, wA, wB, C);
@@ -137,7 +137,7 @@ int main(int argc, char** argv)
 	MulGPU<<<dimGrid,dimBlock>>>(A_GPU, B_GPU, hA, wA, wB, C_GPU);
 
 	// GPU -> CPU
-	cudaMemcpy(C_HOST, C_GPU, sizeC*sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy(C_HOST, C_GPU, size_C*sizeof(float), cudaMemcpyDeviceToHost);
 
 	//printf("\n\nMATRIX A\n");print_matrix(A, hA, wA);
 	//printf("\n\nMATRIX B\n");print_matrix(B, hB, wB);

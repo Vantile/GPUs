@@ -128,7 +128,6 @@ int main(int argc, char** argv)
 	cudaMemcpy(B_GPU, B, sizeB*sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(C_GPU, C, sizeC*sizeof(float), cudaMemcpyHostToDevice);
 
-	
 	// MULT CPU
 	Mul(A, B, hA, wA, wB, C);
 
