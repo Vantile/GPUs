@@ -6,6 +6,8 @@
 //CUDA
 #include <cuda.h>
 
+// No funciona a partir de matrices de tamaño 4096.
+
 double wtime(void)
 {
         static struct timeval   tv0;
