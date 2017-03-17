@@ -18,11 +18,11 @@ void Mul(float* A, float* B, int hA, int wA, int wB,
 	float* Ad;
 	size = hA * wA * sizeof(float);
 	cudaMalloc((void**)&Ad, size);
-	cudaMemcpy(...);
+	cudaMemcpy(Ad, A, size, cudaMemcpyHostToDevice);
 	float* Bd;
 	size = wA * wB * sizeof(float);
 	cudaMalloc((void**)&Bd, size);
-	cudaMemcpy(...);
+	cudaMemcpy(Bd, B, size, cudaMemcpyHostToDevice);
 
 	// Allocate C on the device
 	float* Cd;
@@ -42,7 +42,7 @@ void Mul(float* A, float* B, int hA, int wA, int wB,
 	);
 
 	// Read C from the device
-	cudaMemcpy(C, Cd, ..., ...);
+	cudaMemcpy(C, Cd, size, cudaMemcpyDeviceToHost);
 
 	// Free device memory
 	cudaFree(Ad);

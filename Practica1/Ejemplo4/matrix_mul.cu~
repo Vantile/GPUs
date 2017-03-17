@@ -30,19 +30,19 @@ void Mul(float* A, float* B, int hA, int wA, int wB,
 	cudaMalloc((void**)&Cd, size);
 
 	// Compute the execution configuration
-	cublasSgemm( 'N', 'N', 
-		hA,				/* [m] */ 
-		wB,				/* [n] */  
-		wA,				/* [k] */ 
+	cublasSgemm( ...
+		...,				/* [m] */ 
+		..,				/* [n] */  
+		..,				/* [k] */ 
 		1,				/* alfa */ 
-		Bd, hA,				/* A[m][k], num columnas (lda) */ 
-		Ad, wA,				/* B[k][n], num columnas (ldb) */
+		..., ...,			/* A[m][k], num columnas (lda) */ 
+		..., ...,			/* B[k][n], num columnas (ldb) */
 		0,				/* beta */
-		Cd, hA				/* C[m][n], num columnas (ldc) */
+		..., ...			/* C[m][n], num columnas (ldc) */
 	);
 
 	// Read C from the device
-	cudaMemcpy(C, Cd, size, cudaMemcpyDeviceToHost);
+	cudaMemcpy(C, Cd, ..., ...);
 
 	// Free device memory
 	cudaFree(Ad);
