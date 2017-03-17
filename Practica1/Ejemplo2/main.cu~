@@ -14,7 +14,7 @@ void Mul(float *A, float *B, int hA, int wA, int wB, float *C)
 
 	for (i=0; i<hA; i++)
 		for (j=0; j<wB; j++){
-			C[i*wB+j] = 0.0;
+			//C[i*wB+j] = 0.0;
 			for (k=0; k<wA; k++)
 				C[i*wB+j] += A[i*wA+k]*B[k*wB+j];
 		}
@@ -22,7 +22,11 @@ void Mul(float *A, float *B, int hA, int wA, int wB, float *C)
 
 __global__ void MulGPU(float *A, float *B, int hA, int wA, int wB, float *C)
 {
-
+	int i, j, k;
+	i = blockIdx.x * blockDim.x + threadIdx.x;
+	j = blockIdx.y * blockDim.y + threadIdx.y;
+	for (k=0; k<wA; k++)
+		C[i*wB+j] += A[i*wA+k]*B[k*wB+j];
 }
 
 
@@ -132,8 +136,8 @@ int main(int argc, char** argv)
 	Mul(A, B, hA, wA, wB, C);
 
 	// MULT GPU
-	dim3 dimBlock(1,1);
-	dim3 dimGrid(1,1);
+	dim3 dimBlock(wB, hA);
+	dim3 dimGrid(8);
 	MulGPU<<<dimGrid,dimBlock>>>(A_GPU, B_GPU, hA, wA, wB, C_GPU);
 
 	// GPU -> CPU
@@ -141,7 +145,7 @@ int main(int argc, char** argv)
 
 	//printf("\n\nMATRIX A\n");print_matrix(A, hA, wA);
 	//printf("\n\nMATRIX B\n");print_matrix(B, hB, wB);
-	//printf("\n\nMATRIX C\n");print_matrix(C, hA, wB);
+	printf("\n\nMATRIX C\n");print_matrix(C, hA, wB);
 
 	if (!diff(A, B, hA, wA, wB, C))
 		printf("ERROR=GPU.vs.CPU matrix mult differs\n");
@@ -150,7 +154,7 @@ int main(int argc, char** argv)
 	// print Matrix
 	//printf("\n\nMATRIX A\n");print_matrix(A, hA, wA);
 	//printf("\n\nMATRIX B\n");print_matrix(B, hB, wB);
-	//printf("\n\nMATRIX C\n");print_matrix(C, hA, wB);
+	printf("\n\nMATRIX C\n");print_matrix(C, hA, wB);
 
 	return (1);
 }
