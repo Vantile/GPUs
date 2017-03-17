@@ -2,6 +2,8 @@
 #include "matrix_mul.h"
 #include <malloc.h>
 #include <stdlib.h>
+#include <sys/time.h>
+#include <math.h>
 
 
 void init_matrix(float *M, int hM, int wM, float k)
