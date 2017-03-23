@@ -6,4 +6,5 @@ Se aplica dos mascaras: una para el eje de X y otra para el eje Y.
 Con el resultado se calcula el gradiente general.
 La ultima fase determina si el resultado es maximo local. Redondea a cuatro posibles valores
 para comprobarlo (0º, 45º, 90º o 135º).
+Debe haber mas de un kernel, por dependencia de datos.
 
