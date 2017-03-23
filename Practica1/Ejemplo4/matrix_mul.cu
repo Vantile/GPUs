@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "cuda.h"
 #include "cublas.h"
 #include "matrix_mul.h"
 
@@ -29,16 +30,18 @@ void Mul(float* A, float* B, int hA, int wA, int wB,
 	size = hA * wB * sizeof(float);
 	cudaMalloc((void**)&Cd, size);
 
+	cublasHandle_t handle;
+
 	// Compute the execution configuration
-	cublasSgemm( ...
-		...,				/* [m] */ 
-		..,				/* [n] */  
-		..,				/* [k] */ 
+	cublasSgemm('n', 'n', 
+		wA,				/* [m] */ 
+		hA,				/* [n] */  
+		wB,				/* [k] */ 
 		1,				/* alfa */ 
-		..., ...,			/* A[m][k], num columnas (lda) */ 
-		..., ...,			/* B[k][n], num columnas (ldb) */
+		Bd, wA,			/* A[m][k], num columnas (lda) */ 
+		Ad, hA,			/* B[k][n], num columnas (ldb) */
 		0,				/* beta */
-		..., ...			/* C[m][n], num columnas (ldc) */
+		Cd, hA			/* C[m][n], num columnas (ldc) */
 	);
 
 	// Read C from the device
