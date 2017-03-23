@@ -30,8 +30,6 @@ void Mul(float* A, float* B, int hA, int wA, int wB,
 	size = hA * wB * sizeof(float);
 	cudaMalloc((void**)&Cd, size);
 
-	cublasHandle_t handle;
-
 	// Compute the execution configuration
 	cublasSgemm('n', 'n', 
 		wA,				/* [m] */ 

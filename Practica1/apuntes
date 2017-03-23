@@ -1,0 +1,9 @@
+Practica 1
+Convolucion en 2D de 3x3 -> Mascara de 3x3
+De 5x5 -> Mascara de 5x5
+El resultado se añade al pixel convolucionado.
+Se aplica dos mascaras: una para el eje de X y otra para el eje Y.
+Con el resultado se calcula el gradiente general.
+La ultima fase determina si el resultado es maximo local. Redondea a cuatro posibles valores
+para comprobarlo (0º, 45º, 90º o 135º).
+
