@@ -8,3 +8,9 @@ La ultima fase determina si el resultado es maximo local. Redondea a cuatro posi
 para comprobarlo (0º, 45º, 90º o 135º).
 Debe haber mas de un kernel, por dependencia de datos.
 
+
+El tamaño de bloque es de 8x8 porque queremos aplicar primero la mascara de reduccion de ruido a matrices de 4x4,
+pero la mascara es de 5x5, por tanto necesitamos los datos de alrededor para los pixeles en el extremo.
+
+El tamaño del grid es de la anchura/16 y la altura/16, porque el numero de bloques seran esos; en ese orden, 
+porque """supongo""" que esta en column major.
