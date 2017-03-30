@@ -163,7 +163,6 @@ void cannyCPU(float *im, float *image_out,
 				/159.0;
 		}
 
-
 	for(i=2; i<height-2; i++)
 		for(j=2; j<width-2; j++)
 		{
