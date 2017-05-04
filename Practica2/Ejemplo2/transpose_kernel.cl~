@@ -7,6 +7,13 @@ void matrixTranspose(__global float * output,
                      const    uint    width)
 
 {
+/*
+	int id = get_global_id(0);
+	int transId = id % width;
+	int row = id / width;
+	int trans = (width * transId) + row;
+	output[trans] = input[id];
+*/
 	int row = get_global_id(0);
 	int col = get_global_id(1);
 	int pos = row * width + col;

@@ -260,8 +260,8 @@ int main(int argc, char **argv)
 		printf("\n\nTranspose Host-Device tHost=%f (s.) tDevice=%f (s.)\n", (t1h-t0h)/1000000, (t1d-t0d)/1000000);
 
 
-//	printMATRIX(array1D, n);
-//	printMATRIX(array1D_trans_GPU, n);
+	printMATRIX(array1D, n);
+	printMATRIX(array1D_trans_GPU, n);
 
 	// clean up
 	clReleaseProgram(program);
