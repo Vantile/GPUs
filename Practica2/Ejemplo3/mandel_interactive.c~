@@ -274,8 +274,6 @@ double calc_mandel_opencl()
 		exit(1);
 	}
 
-	// STILL THINGS TO DO
-
 	return(1.0);
 }
  
