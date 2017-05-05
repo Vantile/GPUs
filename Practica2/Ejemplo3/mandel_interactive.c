@@ -4,6 +4,7 @@
 #include <GL/glut.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
+#include "CL/cl.h"
 
 #define RUN_SERIAL     0
 #define RUN_OPENCL_CPU 1
@@ -140,16 +141,17 @@ void hsv_to_rgb(int hue, int min, int max, rgb_t *p)
 
 double calc_mandel_opencl()
 {
-	/*
-	 * TODO
-	 */
 	cl_device_id device_id;
 	cl_context context;
 	cl_command_queue command_queue;
 	cl_program program;
-	cl_kernel ko_mandel;
+	cl_kernel kernel;
+
+	cl_int err;
 
 	cl_mem texCL;
+
+	size_t global[2];
 
 	FILE *fp;
 	long filelen;
@@ -179,7 +181,7 @@ double calc_mandel_opencl()
 	err = clGetPlatformIDs(0, NULL, &numPlatforms);
 	if (err != CL_SUCCESS || numPlatforms <= 0)
 	{
-		printf("Error: Failed to find a platform!\n%s\n",err_code(err));
+		printf("Error: Failed to find a platform!\n");
 		return EXIT_FAILURE;
 	}
 
@@ -188,10 +190,11 @@ double calc_mandel_opencl()
 	err = clGetPlatformIDs(numPlatforms, Platform, NULL);
 	if (err != CL_SUCCESS || numPlatforms <= 0)
 	{
-		printf("Error: Failed to get the platform!\n%s\n",err_code(err));
+		printf("Error: Failed to get the platform!\n");
         	return EXIT_FAILURE;
 	}
 
+	int i;
 	// Secure a GPU
 	for (i = 0; i < numPlatforms; i++)
 	{
@@ -204,17 +207,15 @@ double calc_mandel_opencl()
 
 	if (device_id == NULL)
 	{
-		printf("Error: Failed to create a device group!\n%s\n",err_code(err));
+		printf("Error: Failed to create a device group!\n");
 		return EXIT_FAILURE;
 	}
-
-	err = output_device_info(device_id);
   
 	// Create a compute context 
 	context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
 	if (!context)
     	{
-        	printf("Error: Failed to create a compute context!\n%s\n", err_code(err));
+        	printf("Error: Failed to create a compute context!\n");
         	return EXIT_FAILURE;
    	}
 
@@ -222,7 +223,7 @@ double calc_mandel_opencl()
 	command_queue = clCreateCommandQueue(context, device_id, 0, &err);
 	if (!command_queue)
 	{
-        	printf("Error: Failed to create a command commands!\n%s\n", err_code(err));
+        	printf("Error: Failed to create a command commands!\n");
         	return EXIT_FAILURE;
 	}
 
@@ -232,14 +233,14 @@ double calc_mandel_opencl()
                                           &kernel_src, NULL, &err);
 	if (err != CL_SUCCESS)
 	{	
-		printf("Unable to create program object. Error Code=%d\n",err);
+		printf("Unable to create program object.");
 		exit(1);
 	}       
 	
 	err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
 	if (err != CL_SUCCESS)
 	{
-        	printf("Build failed. Error Code=%d\n", err);
+        	printf("Build failed.");
 
 		size_t len;
 		char buffer[2048];
@@ -253,12 +254,12 @@ double calc_mandel_opencl()
 	kernel = clCreateKernel(program, "calcMandelCL", &err);
 	if (err != CL_SUCCESS)
 	{	
-		printf("Unable to create kernel object. Error Code=%d\n",err);
+		printf("Unable to create kernel object.");
 		exit(1);
 	}
 
 	// create buffer objects of kernel function
-	texCL = clCreateBuffer(context, CL_MEM_READ_ONLY, tex_h*tex_w*3+tex_h*sizeof(rgb_t*), NULL, NULL);
+	texCL = clCreateBuffer(context, CL_MEM_READ_WRITE, tex_h*tex_w*sizeof(rgb_t*), NULL, NULL);
 	if(!texCL)
 	{
 		printf("Error: Failed to allocate device memory!\n");
@@ -266,17 +267,60 @@ double calc_mandel_opencl()
 	}
 
 	// Write into compute device memory
-	err = clEnqueueWriteBuffer(command_queue, texCL, CL_TRUE, 0, tex_h*tex_w*3+tex_h*sizeof(rgb_t*), 
-					tex, 0, NULL, NULL);
+	err = clEnqueueWriteBuffer(command_queue, texCL, CL_TRUE, 0, tex_h*tex_w*sizeof(rgb_t*), 
+					tex[0], 0, NULL, NULL);
 	if(err != CL_SUCCESS)
 	{
-		printf("Error: Failed to write tex to source array!\n%s\n", err_code(err));
+		printf("Error: Failed to write tex to source array!\n");
 		exit(1);
 	}
 
-	// STILL THINGS TO DO
+	// set the kernel arguments
+	if( clSetKernelArg(kernel, 0, sizeof(cl_mem), &texCL) ||
+		clSetKernelArg(kernel, 1, sizeof(int), &width) ||
+		clSetKernelArg(kernel, 2, sizeof(int), &height) ||
+		clSetKernelArg(kernel, 3, sizeof(double), &cx) ||
+		clSetKernelArg(kernel, 4, sizeof(double), &cy) ||
+		clSetKernelArg(kernel, 5, sizeof(double), &scale) ||
+		clSetKernelArg(kernel, 6, sizeof(int), &max_iter) ||
+		clSetKernelArg(kernel, 7, sizeof(int), &invert) ||
+		clSetKernelArg(kernel, 8, sizeof(int), &saturation) ||
+		clSetKernelArg(kernel, 9, sizeof(int), &color_rotate) != CL_SUCCESS)
+	{
+		printf("Unable to set kernel arguments. Error code=%d\n", err);
+		exit(1);
+	}
 
-	return(1.0);
+	global[0] = width;
+	global[1] = height;
+
+	double t0d = getMicroSeconds();
+	err = clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL, global, NULL, 0, NULL, NULL);
+	double t1d = getMicroSeconds();
+
+	if(err != CL_SUCCESS)
+	{
+		printf("Unable to enqueue kernel command. Error Code=%d\n", err);
+		exit(1);
+	}
+
+	clFinish(command_queue);
+
+	// read the output
+	err = clEnqueueReadBuffer(command_queue, texCL, CL_TRUE, 0, tex_h*tex_w*sizeof(rgb_t*),
+					tex[0], 0, NULL, NULL);
+	if(err != CL_SUCCESS)
+	{
+		printf("Error enqueuing read buffer command. Error Code=%d\n", err);
+		exit(1);
+	}
+	
+	clReleaseProgram(program);
+	clReleaseKernel(kernel);
+	clReleaseCommandQueue(command_queue);
+	clReleaseContext(context);
+
+	return(t1d - t0d);
 }
  
 double calc_mandel()
