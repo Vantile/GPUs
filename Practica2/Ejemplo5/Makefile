@@ -5,7 +5,7 @@ endif
 
 CCFLAGS=-O3 -lm
 
-LIBS = -lOpenCL -fopenmp
+LIBS = -lOpenCL -fopenmp -I/usr/local/cuda/include
 
 # Change this variable to specify the device type
 # to the OpenCL device type of choice. You can also

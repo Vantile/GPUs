@@ -37,11 +37,11 @@ int main(int argc, char **argv)
 	double t0, t1;
 	double pi;
 
-	if (argc<2){
+	if (argc==2){
+		n = atoi(argv[1]);
+	} else {
 		printf("./exec n [c,g] \n");
 		return(-1);
-	} else {
-		n = atoi(argv[1]);
 	}
 
 	switch (argv[2][0]) {

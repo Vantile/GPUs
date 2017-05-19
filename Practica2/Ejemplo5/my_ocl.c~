@@ -163,7 +163,7 @@ double calc_piOCL(int n)
 	
 	pi = area / n;
 
-	clReleaseMemObject(areaCL);
+	clReleaseMemObject(imageCL);
 	clReleaseProgram(program);
 	clReleaseKernel(kernel);
 	clReleaseCommandQueue(command_queue);

@@ -3,8 +3,11 @@
 #include "CL/cl.h"
 
 
-double calc_piOCL(int n)
+void remove_noiseOCL(float *im, float *image_out, 
+	float thredshold, int window_size,
+	int height, int width)
 {
+
 	cl_device_id device_id;
 	cl_context context;
 	cl_command_queue command_queue;
@@ -13,9 +16,10 @@ double calc_piOCL(int n)
 
 	cl_int err;
 
-	cl_mem areaCL;
+	cl_mem imageCL;
+	cl_mem imageCLOUT;
 
-	size_t global[1];
+	size_t global[2];
 
 	FILE *fp;
 	long filelen;
@@ -23,7 +27,7 @@ double calc_piOCL(int n)
 	char *kernel_src;
 
 	// read the kernel
-	fp = fopen("pi.cl","r");
+	fp = fopen("rmnoise.cl","r");
 	fseek(fp,0L, SEEK_END);
 	filelen = ftell(fp);
 	rewind(fp);
@@ -115,7 +119,7 @@ double calc_piOCL(int n)
 		exit(1);
 	}
 
-	kernel = clCreateKernel(program, "calcpi", &err);
+	kernel = clCreateKernel(program, "rmnoise", &err);
 	if (err != CL_SUCCESS)
 	{	
 		printf("Unable to create kernel object.");
@@ -123,24 +127,41 @@ double calc_piOCL(int n)
 	}
 
 	// create buffer objects of kernel function
-	areaCL = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(double), NULL, NULL);
-	if(!areaCL)
+	imageCL = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(float)*height*width, NULL, NULL);
+	imageCLOUT = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float)*height*width, NULL, NULL);
+	if(!imageCL || !imageCLOUT)
 	{
 		printf("Error: Failed to allocate device memory!\n");
 		exit(1);
 	}
 
+	// Write into compute device memory
+	err = clEnqueueWriteBuffer(command_queue, imageCL, CL_TRUE, 0, sizeof(float)*height*width, 
+					im, 0, NULL, NULL);
+	if(err != CL_SUCCESS)
+	{
+		printf("Error: Failed to write tex to source array!\n");
+		exit(1);
+	}
+
 	// set the kernel arguments
-	if( (clSetKernelArg(kernel, 0, sizeof(cl_mem), &areaCL)) ||
-		( clSetKernelArg(kernel, 1, sizeof(int), &n)) != CL_SUCCESS)
+	if(( clSetKernelArg(kernel, 0, sizeof(cl_mem), &imageCL) ||
+		clSetKernelArg(kernel, 1, sizeof(cl_mem), &imageCLOUT) ||
+		clSetKernelArg(kernel, 2, sizeof(float), &thredshold) ||
+		clSetKernelArg(kernel, 3, sizeof(int), &window_size) ||
+		clSetKernelArg(kernel, 4, sizeof(int), &height) ||
+		clSetKernelArg(kernel, 5, sizeof(int), &width)) != CL_SUCCESS)
 	{
 		printf("Unable to set kernel arguments. Error code=%d\n", err);
 		exit(1);
 	}
 
-	global[0] = n;
+	global[0] = height;
+	global[1] = width;
 
-	err = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, global, NULL, 0, NULL, NULL);
+	double t0d = getMicroSeconds();
+	err = clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL, global, NULL, 0, NULL, NULL);
+	double t1d = getMicroSeconds();
 
 	if(err != CL_SUCCESS)
 	{
@@ -150,24 +171,18 @@ double calc_piOCL(int n)
 
 	clFinish(command_queue);
 
-	double area, pi;
-
 	// read the output
-	err = clEnqueueReadBuffer(command_queue, areaCL, CL_TRUE, 0, sizeof(double),
-					&area, 0, NULL, NULL);
+	err = clEnqueueReadBuffer(command_queue, imageCLOUT, CL_TRUE, 0, sizeof(float)*width*height,
+					image_out, 0, NULL, NULL);
 	if(err != CL_SUCCESS)
 	{
 		printf("Error enqueuing read buffer command. Error Code=%d\n", err);
 		exit(1);
 	}
 	
-	pi = area / n;
-
-	clReleaseMemObject(areaCL);
+	clReleaseMemObject(imageCL);
 	clReleaseProgram(program);
 	clReleaseKernel(kernel);
 	clReleaseCommandQueue(command_queue);
 	clReleaseContext(context);
-
-	return pi;
 }
