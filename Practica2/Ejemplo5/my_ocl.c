@@ -123,7 +123,7 @@ double calc_piOCL(int n)
 	}
 
 	// create buffer objects of kernel function
-	areaCL = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(double), NULL, NULL);
+	areaCL = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(double)*n, NULL, NULL);
 	if(!areaCL)
 	{
 		printf("Error: Failed to allocate device memory!\n");
@@ -150,18 +150,21 @@ double calc_piOCL(int n)
 
 	clFinish(command_queue);
 
-	double area, pi;
+	double *area; 
+	area = (double *) malloc(sizeof(double)*n);
+	double pi, sumArea;
 
 	// read the output
-	err = clEnqueueReadBuffer(command_queue, areaCL, CL_TRUE, 0, sizeof(double),
-					&area, 0, NULL, NULL);
+	err = clEnqueueReadBuffer(command_queue, areaCL, CL_TRUE, 0, sizeof(double)*n,
+					area, 0, NULL, NULL);
 	if(err != CL_SUCCESS)
 	{
 		printf("Error enqueuing read buffer command. Error Code=%d\n", err);
 		exit(1);
 	}
-	
-	pi = area / n;
+	for(i = 1; i < n; i++)
+		sumArea += area[i];
+	pi = sumArea / n;
 
 	clReleaseMemObject(areaCL);
 	clReleaseProgram(program);
