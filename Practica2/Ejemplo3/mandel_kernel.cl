@@ -40,19 +40,19 @@ void calcMandelCL(__global rgb_t* tex,
 			const int sat,
 			const int color_rotate)
 {
-	double zx, zy, zx2, zy2;
-	int iter, min, max;
+	int i, j, iter, min, max;
+	rgb_t pixel;
+	double x, y, zx, zy, zx2, zy2;
+	
 	min = max_iter; max = 0;
-	int row = get_global_id(0);
-	int col = get_global_id(1);
-
-	rgb_t pixel = tex[row*width+col];
-
-	double y = (row - height/2) * scale + cy;
-	double x = (col - width/2) * scale + cx;
-
+	
+	i = get_global_id(0);
+	j = get_global_id(1);
+	pixel = tex[i * width + j];
+	y = (i - height/2) * scale + cy;
+	x = (j - width/2) * scale + cx;
 	zx = zy = zx2 = zy2 = 0;
-	for(iter=0; iter < max_iter; iter++) {
+	for(iter = 0; iter < max_iter; iter++){
 		zy=2*zx*zy + y;
 		zx=zx2-zy2 + x;
 		zx2=zx*zx;
@@ -60,10 +60,34 @@ void calcMandelCL(__global rgb_t* tex,
 		if (zx2+zy2>max_iter)
 			break;
 	}
-	if (iter < min) min = iter;
-	if (iter > max) max = iter;
+	if(iter < min) min = iter;
+	if(iter > max) max = iter;
 
-	hsv_to_rgb_kernel(iter, min, max, &pixel, invert, sat, color_rotate);
+//	hsv_to_rgb_kernel(iter, min, max, &pixel, invert, sat, color_rotate);
 
-	tex[row*width+col] = pixel;
+	if (min == max) max = min + 1;
+	if (invert) iter = max - (iter - min);
+	if (!sat) {
+		pixel.r = pixel.g = pixel.b = 255 * (max - iter) / (max - min);
+	}
+	else
+	{
+		double h = fmod(color_rotate + 1e-4 + 4.0 * (iter - min) / (max - min), 6);
+	#	define VAL 255
+		double c = VAL * sat;
+		double X = c * (1 - fabs(fmod(h, 2) - 1));
+	 
+		pixel.r = pixel.g = pixel.b = 0;
+	 
+		switch((int)h) {
+		case 0: pixel.r = c; pixel.g = X; break;
+		case 1: pixel.r = X; pixel.g = c; break;
+		case 2: pixel.g = c; pixel.b = X; break;
+		case 3: pixel.g = X; pixel.b = c; break;
+		case 4: pixel.r = X; pixel.b = c; break;
+		default:pixel.r = c; pixel.b = X;
+		}
+	}
+
+	tex[i] = pixel;
 }

@@ -291,8 +291,10 @@ double calc_mandel_opencl()
 		exit(1);
 	}
 
-	global[0] = width;
-	global[1] = height;
+	global[0] = height;
+	//global[0] = tex_h;
+	global[1] = width;
+	//global[1] = tex_w;
 
 	double t0d = getMicroSeconds();
 	err = clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL, global, NULL, 0, NULL, NULL);

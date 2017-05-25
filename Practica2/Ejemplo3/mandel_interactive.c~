@@ -268,7 +268,7 @@ double calc_mandel_opencl()
 
 	// Write into compute device memory
 	err = clEnqueueWriteBuffer(command_queue, texCL, CL_TRUE, 0, tex_h*tex_w*sizeof(rgb_t*), 
-					&tex[0], 0, NULL, NULL);
+					tex, 0, NULL, NULL);
 	if(err != CL_SUCCESS)
 	{
 		printf("Error: Failed to write tex to source array!\n");
@@ -291,8 +291,10 @@ double calc_mandel_opencl()
 		exit(1);
 	}
 
-	global[0] = width;
-	global[1] = height;
+	global[0] = height;
+	//global[0] = tex_h;
+	global[1] = width;
+	//global[1] = tex_w;
 
 	double t0d = getMicroSeconds();
 	err = clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL, global, NULL, 0, NULL, NULL);
@@ -308,7 +310,7 @@ double calc_mandel_opencl()
 
 	// read the output
 	err = clEnqueueReadBuffer(command_queue, texCL, CL_TRUE, 0, tex_h*tex_w*sizeof(rgb_t*),
-					tex[0], 0, NULL, NULL);
+					tex, 0, NULL, NULL);
 	if(err != CL_SUCCESS)
 	{
 		printf("Error enqueuing read buffer command. Error Code=%d\n", err);
