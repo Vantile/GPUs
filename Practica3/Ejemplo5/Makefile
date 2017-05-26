@@ -3,7 +3,7 @@
 
 CC=gcc
 
-CFLAGS=-O3
+CFLAGS=-O3 -std=c99
 
 PGCC=pgcc -Minfo -fast -acc -ta=nvidia -tp=nehalem
 

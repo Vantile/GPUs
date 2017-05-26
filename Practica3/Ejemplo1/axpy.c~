@@ -63,14 +63,14 @@ int main (int argc, const char *argv[])
 	#pragma acc data copy(y_acc[0:n]) copyin(x_acc[0:n])
 	#pragma acc kernels loop independent
 	for(i=0; i<n; i++)
-		y_acc[i] = a*x_acc[i] + y_acc[i];
+		y_acc[i] = a*cosf(x_acc[i]) + y_acc[i];
 
 	t1 = get_time();
 	printf("AXPY ACC %f ms\n", (t1-t0)/1000);
 
 	t0 = get_time();
 	for(i=0; i<n; i++)
-		y[i] = a*x[i] + y[i];
+		y[i] = a*cosf(x[i]) + y[i];
 
 	t1 = get_time();
 	printf("AXPY Seq %f ms\n", (t1-t0)/1000);

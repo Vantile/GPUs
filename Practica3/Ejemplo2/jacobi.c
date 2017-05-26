@@ -52,14 +52,14 @@ int main(int argc, char** argv)
 
 	int iter = 0;
 
-#pragma acc ...
+#pragma acc data copy(A[0:n*m]) create(Anew[0:n*m])
 {
 	StartTimer();
 
 	while ( error > tol && iter < iter_max )
 	{
 		error = 0.0;
-
+		#pragma acc loop independent reduction(max:error)
 		for( int j = 1; j < n-1; j++)
 		{
 			for( int i = 1; i < m-1; i++ )
@@ -69,7 +69,7 @@ int main(int argc, char** argv)
 				error = fmax( error, fabs(Anew[j*m+i] - A[j*m+i]));
 			}
 		}
-
+		#pragma acc loop independent
 		for( int j = 1; j < n-1; j++)
 		{
 			for( int i = 1; i < m-1; i++ )

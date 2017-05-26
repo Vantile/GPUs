@@ -19,6 +19,7 @@ double get_time(){
 typedef struct { float m, x, y, z, vx, vy, vz; } body;
 
 void randomizeBodies(body *data, int n) {
+	#pragma acc kernels loop independent
 	for (int i = 0; i < n; i++) {
 		data[i].m  = 2.0f * (rand() / (float)RAND_MAX) - 1.0f;
 
